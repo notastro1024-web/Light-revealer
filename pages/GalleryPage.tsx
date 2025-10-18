@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GALLERY_ITEMS } from '../constants';
 import { GalleryItem, Page } from '../types';

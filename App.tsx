@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Page } from './types';
 import Header from './components/Header';

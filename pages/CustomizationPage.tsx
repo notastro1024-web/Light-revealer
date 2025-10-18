@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { ART_CATEGORIES, ART_STYLES, FRAME_COLORS, FRAME_MATERIALS, PRE_SELECTED_ART } from '../constants';
-import { ArtCategory, ArtStyle, ElementStylePair, FrameColor, FrameMaterial } from '../types';
+import { ART_STYLES, FRAME_COLORS, FRAME_MATERIALS } from '../constants';
+import { ArtStyle, ElementStylePair, FrameColor, FrameMaterial } from '../types';
 import Icon from '../components/Icon';
 import { identifyImageElements, generateArtPreview } from '../services/geminiService';
 
@@ -21,7 +20,6 @@ const StepIndicator: React.FC<{ step: number; title: string; currentStep: number
 
 const CustomizationPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
-    const [selectedCategory, setSelectedCategory] = useState<ArtCategory | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     
@@ -46,12 +44,12 @@ const CustomizationPage: React.FC = () => {
             setGeneratedArt(null);
             
             setIsIdentifying(true);
+            setCurrentStep(2);
             const elements = await identifyImageElements(file);
             setIdentifiedElements(['Full Image', ...elements]);
             // Default to styling the full image
             setElementsToStyle([{ element: 'Full Image', style: 'Colored Glow' }]);
             setIsIdentifying(false);
-            setCurrentStep(2);
         }
     };
 
@@ -60,16 +58,21 @@ const CustomizationPage: React.FC = () => {
             if(element === 'Full Image') {
                 return [{ element: 'Full Image', style: style }];
             }
-            const otherElements = prev.filter(e => e.element !== element && e.element !== 'Full Image');
-            return [...otherElements, { element, style }];
+            // Find existing element and update its style
+            const existing = prev.find(e => e.element === element);
+            if(existing) {
+                return prev.map(e => e.element === element ? { ...e, style } : e);
+            }
+            // This case should ideally not happen if checkbox is handled correctly
+            return prev;
         });
     };
     
     const handleElementSelectionToggle = (element: string) => {
         setElementsToStyle(prev => {
              if (element === 'Full Image') {
-                 // if full image is checked, uncheck others. If it's unchecked, do nothing.
-                return prev.find(e => e.element === 'Full Image') ? [] : [{element: 'Full Image', style: 'Colored Glow'}];
+                const isAlreadySelected = prev.some(e => e.element === 'Full Image');
+                return isAlreadySelected ? [] : [{element: 'Full Image', style: 'Colored Glow'}];
              }
              
             // Remove 'Full Image' if a specific element is selected
@@ -103,7 +106,7 @@ const CustomizationPage: React.FC = () => {
             case 'Bronze': classes += 'bg-amber-700 border-amber-900 '; break;
         }
          switch(frameMaterial) {
-            case 'Wood': classes += 'shadow-lg '; break; // simple shadow
+            case 'Wood': classes += 'shadow-lg '; break;
             case 'Metal': classes += 'shadow-xl bg-gradient-to-br from-gray-500 to-gray-700 '; break;
             case 'Matte': classes += 'shadow-md '; break;
             case 'Gloss': classes += 'shadow-2xl '; break;
@@ -174,7 +177,10 @@ const CustomizationPage: React.FC = () => {
                                                             </label>
                                                         </div>
                                                         {elementsToStyle.some(e=>e.element === el) && (
-                                                             <select onChange={(e) => handleElementStyleChange(el, e.target.value as ArtStyle)} className="mt-2 w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 text-sm">
+                                                             <select 
+                                                                value={elementsToStyle.find(e => e.element === el)?.style || 'Colored Glow'}
+                                                                onChange={(e) => handleElementStyleChange(el, e.target.value as ArtStyle)} 
+                                                                className="mt-2 w-full bg-gray-700 text-white border-gray-600 rounded-md p-2 text-sm">
                                                                 {ART_STYLES.map(style => <option key={style} value={style}>{style}</option>)}
                                                             </select>
                                                         )}
@@ -201,7 +207,7 @@ const CustomizationPage: React.FC = () => {
                                         <label className="text-gray-400 text-sm">Material</label>
                                         <div className="flex flex-wrap gap-2 mt-2">
                                             {FRAME_MATERIALS.map(mat => (
-                                                <button key={mat} onClick={() => {setFrameMaterial(mat); setCurrentStep(s=>Math.max(s,3))}} className={`px-4 py-2 text-sm rounded-md transition-colors ${frameMaterial === mat ? 'bg-yellow-400 text-black' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>{mat}</button>
+                                                <button key={mat} onClick={() => {setFrameMaterial(mat); if(currentStep < 3 && uploadedFile) setCurrentStep(3);}} className={`px-4 py-2 text-sm rounded-md transition-colors ${frameMaterial === mat ? 'bg-yellow-400 text-black' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>{mat}</button>
                                             ))}
                                         </div>
                                     </div>
@@ -209,7 +215,7 @@ const CustomizationPage: React.FC = () => {
                                         <label className="text-gray-400 text-sm">Color</label>
                                          <div className="flex flex-wrap gap-2 mt-2">
                                             {FRAME_COLORS.map(col => (
-                                                <button key={col} onClick={() => {setFrameColor(col); setCurrentStep(s=>Math.max(s,3))}} className={`px-4 py-2 text-sm rounded-md transition-colors ${frameColor === col ? 'bg-yellow-400 text-black' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>{col}</button>
+                                                <button key={col} onClick={() => {setFrameColor(col); if(currentStep < 3 && uploadedFile) setCurrentStep(3);}} className={`px-4 py-2 text-sm rounded-md transition-colors ${frameColor === col ? 'bg-yellow-400 text-black' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>{col}</button>
                                             ))}
                                         </div>
                                     </div>

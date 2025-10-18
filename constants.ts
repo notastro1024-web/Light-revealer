@@ -1,4 +1,3 @@
-
 import { GalleryItem, ArtCategory, ArtStyle, FrameMaterial, FrameColor } from './types';
 
 export const GALLERY_ITEMS: GalleryItem[] = [

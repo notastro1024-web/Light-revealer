@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 type IconName = 'upload' | 'palette' | 'frame' | 'check' | 'chevron-down' | 'loader' | 'whatsapp';

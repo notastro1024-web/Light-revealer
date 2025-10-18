@@ -1,4 +1,3 @@
-
 export enum Page {
   Home = 'Home',
   Customize = 'Customize',
